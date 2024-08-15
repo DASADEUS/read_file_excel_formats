@@ -1,7 +1,6 @@
-import pandas as pd
 import os
 import pyxlsb
-
+import pandas as pd
 def read_file_excel_formats(file_path: str, skip_top_rows: int = 0, header_rows: int = 1, skip_bottom_rows: int = 0, csv_delimiter: str = ';') -> pd.DataFrame:
     """
     Читает файл по указанному пути в зависимости от его формата и возвращает DataFrame.
@@ -55,7 +54,12 @@ def read_file_excel_formats(file_path: str, skip_top_rows: int = 0, header_rows:
                 dtype=str,  # Принудительное чтение всех данных как строк
             )
             # Преобразование всех уровней MultiIndex в строки
-            df.columns = pd.MultiIndex.from_tuples([tuple([str(level) for level in column]) for column in df.columns])
+
+            df.columns = pd.MultiIndex.from_tuples([
+                                tuple([str(level) for level in column]) if isinstance(column, tuple) else (str(column),)
+                                for column in df.columns])
+            # Обеспечиваем уникальность колонок
+            df.columns = pd.io.common.dedup_names(df.columns, is_potential_multiindex=True)
 
         elif file_extension == '.csv':
             # Чтение CSV файла без заголовков
@@ -76,6 +80,8 @@ def read_file_excel_formats(file_path: str, skip_top_rows: int = 0, header_rows:
             #Склеивает заголовки
             # df.columns = ['_'.join(map(str, col)) for col in df.columns]
             df = df.iloc[header_rows:]
+            # Обеспечиваем уникальность колонок
+            df.columns = pd.io.common.dedup_names(df.columns, is_potential_multiindex=True)
 
         # # Чтение XML файлов
         # elif file_extension == '.xml':
