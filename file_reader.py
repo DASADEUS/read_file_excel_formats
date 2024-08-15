@@ -2,7 +2,7 @@ import pandas as pd
 import os
 import pyxlsb
 
-def read_file_excel_formats(file_path: str, skip_top_rows: int = 0, header_rows: int = 1, skip_bottom_rows: int = 0, csv_delimiter: str = ',') -> pd.DataFrame:
+def read_file_excel_formats(file_path: str, skip_top_rows: int = 0, header_rows: int = 1, skip_bottom_rows: int = 0, csv_delimiter: str = ';') -> pd.DataFrame:
     """
     Читает файл по указанному пути в зависимости от его формата и возвращает DataFrame.
     Поддерживаемые форматы: .xlsx, .xls, .xlsm, .xlsb, .xlt, .xltm, .xltx, .csv
@@ -51,8 +51,11 @@ def read_file_excel_formats(file_path: str, skip_top_rows: int = 0, header_rows:
                 skiprows=skip_top_rows,  # Пропуск указанных строк сверху
                 header=list(range(header_rows)),  # Установка заголовков из указанного количества строк
                 skipfooter=skip_bottom_rows,  # Пропуск строк снизу
-                engine=engine  # Использование указанного движка для чтения
+                engine=engine,  # Использование указанного движка для чтения
+                dtype=str,  # Принудительное чтение всех данных как строк
             )
+            # Преобразование всех уровней MultiIndex в строки
+            df.columns = pd.MultiIndex.from_tuples([tuple([str(level) for level in column]) for column in df.columns])
 
         elif file_extension == '.csv':
             # Чтение CSV файла без заголовков
@@ -62,13 +65,16 @@ def read_file_excel_formats(file_path: str, skip_top_rows: int = 0, header_rows:
                 skipfooter=skip_bottom_rows,
                 engine='python',
                 header=None,
-                delimiter=csv_delimiter
+                delimiter=csv_delimiter,
+                dtype=str
             )
             # Создание MultiIndex для заголовков
             headers = [list(df.iloc[i]) for i in range(header_rows)]
             multi_index = pd.MultiIndex.from_arrays(headers, names=[f'Level_{i+1}' for i in range(header_rows)])
             # Назначение MultiIndex в качестве заголовков
             df.columns = multi_index
+            #Склеивает заголовки
+            # df.columns = ['_'.join(map(str, col)) for col in df.columns]
             df = df.iloc[header_rows:]
 
         # # Чтение XML файлов
@@ -84,4 +90,3 @@ def read_file_excel_formats(file_path: str, skip_top_rows: int = 0, header_rows:
 
     # Возвращаем DataFrame с прочитанными данными
     return df.reset_index(drop=True)
-
