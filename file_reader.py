@@ -59,7 +59,7 @@ def read_file_excel_formats(file_path: str, skip_top_rows: int = 0, header_rows:
                                 tuple([str(level) for level in column]) if isinstance(column, tuple) else (str(column),)
                                 for column in df.columns])
             # Обеспечиваем уникальность колонок
-            df.columns = pd.io.common.dedup_names(df.columns, is_potential_multiindex=True)
+            df.columns = pd.MultiIndex.from_tuples(pd.io.common.dedup_names(df.columns, is_potential_multiindex=True))
 
         elif file_extension == '.csv':
             # Чтение CSV файла без заголовков
@@ -81,7 +81,7 @@ def read_file_excel_formats(file_path: str, skip_top_rows: int = 0, header_rows:
             # df.columns = ['_'.join(map(str, col)) for col in df.columns]
             df = df.iloc[header_rows:]
             # Обеспечиваем уникальность колонок
-            df.columns = pd.io.common.dedup_names(df.columns, is_potential_multiindex=True)
+            df.columns = pd.MultiIndex.from_tuples(pd.io.common.dedup_names(df.columns, is_potential_multiindex=True))
 
         # # Чтение XML файлов
         # elif file_extension == '.xml':
